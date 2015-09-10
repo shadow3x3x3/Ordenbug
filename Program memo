@@ -1,0 +1,36 @@
+**找第一個skyline - 路徑最短**
+放入第一個點到路徑
+是否是終點：
+  不是：
+  --找需要的下一個點--
+    迭代：對每個未使用邊做搜尋
+      找到有連接點的邊
+      使用泡沫排序法找到最距離最短的邊 - 貪婪
+      將此邊改成使用過
+    迭代完畢
+
+是否為最後的點
+      是：
+      return
+
+      不是：
+      進行遞迴（到下一個節點進行深度優先搜尋
+
+  是：
+  --完成此演算法--
+  加入這一條路徑進入skyline
+
+
+hash no_1, boolean, connect[], distance, attr1, attr2, att3
+     key   [0]      [1]        [2]       [3]    [4]    [5]
+
+
+是否是終點：
+  不是：
+  skyline 是否支配
+
+temp_distance = [value[1][1], value[2]] if value[2] < temp_distance[1]
+edge_connect_state[key.to_sym][0] = true
+
+temp_distance = [value[1][0], value[2]] if value[2] < temp_distance[1]
+edge_connect_state[key.to_sym][0] = true

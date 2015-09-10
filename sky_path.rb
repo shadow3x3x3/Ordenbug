@@ -1,29 +1,30 @@
 class SkyPath
-  def initialize data
+  def initialize data, attr_num
     @data          = data
-    @norm_data     = data_to_hash @data
+    @norm_data     = data_to_hash @data, attr_num
     @skyline_path  = []
   end
 
   def test
     puts "hash #{@norm_data}"
+    puts "skyline path #{@skyline_path}"
   end
 
   def find_skyline_path start, terminal
-    find_first_skyline start, terminal
-    # find_all_skyline_path start, terminal
-    puts "skyline path #{@skyline_path}"
+    find_first_skyline start, terminal, @norm_data
+    # puts "hash #{@norm_data}"
+    find_all_skyline_path start, terminal
   end
 
   private
   # clear data
   # hash key: no ; hash value: used flag, connect[], atrributes...
-  def data_to_hash data
+  def data_to_hash data, attr_num
     new_content  = []
     connect_node = []
     data_hash    = {}
     data_array   = data.split(" ").map.with_index do |value, index|
-      if (0..2) === index % 7
+      if (0..2) === index % (attr_num + 3)
         value.to_i
       else
         value.to_f
@@ -31,7 +32,7 @@ class SkyPath
     end
 
     data_array.each_with_index do |elem, index|
-      check_connect_index = index % 7
+      check_connect_index = index % (attr_num + 3)
       # making connecting nodes array
       if check_connect_index == 0         # used flag
         new_content  << elem
@@ -49,8 +50,8 @@ class SkyPath
     end
 
     new_content.each_with_index do |elem, index|
-      if index % 7 == 0
-        data_hash["no_#{elem}".to_sym] = new_content[index+1..index+6]
+      if index % (attr_num + 3) == 0
+        data_hash["no_#{elem}".to_sym] = new_content[index+1..index+attr_num+2]
       end
     end
     data_hash
@@ -60,64 +61,63 @@ class SkyPath
   # value[0]: used or not
   # value[1]: connect nodes
   # value[2]: distance
-  def find_first_skyline start, terminal, path = Array.new
-    temp_distance = [terminal, 10000000000] # node, distance
-    node_stack = []
-    path << start
+  def find_first_skyline start, terminal, edges, path = Array.new
+    temp_distance = [nil, -1, 10000000000] # node, distance
+    next_node     = true                   # next node exists or not
 
+    # save edges states from upper
+    edges_connect_state = edges
+
+    path << start
+    puts "#{path}"
+
+    #### Confirm Terminal ####
     if start != terminal
-      puts "Start is unterminal."
-      @norm_data.each do |key, value|
-        if value[0] == false
-          if value[1][0] == start
-            node_stack << value[1][1]
-            temp_distance = [value[1][1], value[2]] if value[2] < temp_distance[1]
-            @norm_data[key.to_sym][0] = true
-          elsif value[1][1] == start
-            node_stack << value[1][0]
-            temp_distance = [value[1][0], value[2]] if value[2] < temp_distance[1]
-            @norm_data[key.to_sym][0] = true
+      # No any node can be connected
+      while next_node
+        # Find nodes that can be connected the edge that's shortest in stack - greedy
+        edges_connect_state.each do |key, value|
+          if value[0] == false
+            # First node connects
+            if value[1][1] == start    # put this edge into stack
+              temp_distance = [value[1][0], key, value[2]] if value[2] < temp_distance[2]
+            # Second node connects
+            elsif value[1][0] == start # put this edge into stack
+              temp_distance = [value[1][1], key, value[2]] if value[2] < temp_distance[2]
+            end
           end
         end
+        next_node = false if temp_distance[0].nil?
+        if next_node
+          # Next node
+          edges_connect_state[temp_distance[1]][0] = true
+          find_first_skyline temp_distance[0], terminal, edges_connect_state, path
+          temp_distance = [nil, -1, 10000000000]
+          unless @skyline_path.empty?
+            return
+          end
+        else
+          # puts "return"
+          path.pop
+          return
+        end
 
-      end
+      end # while end
 
-      if
-
-      puts "#{path}"
-      puts "temp_distance #{temp_distance}"
-
-      until node_stack.empty?
-          find_first_skyline node_stack.pop, terminal, path
-      end
-
-
-    else
+    elsif start == terminal # We arrive at terminal!
       puts "--Start is terminal. Complete skyline first path.--"
-      @skyline_path << path
+      # puts "final #{path}"
+      skyline_path = Array.new(path)
+      @skyline_path << skyline_path
+      puts "skyline_path  #{@skyline_path}"
     end
+
+
 
   end
 
   def find_all_skyline_path start, terminal, level = 0
-
-    if start != terminal
-      puts "Start is unterminal."
-      @norm_data.each do |key, value|
-        if value[0] == false
-          if value[1][0] == start && value[1][0] != @skyline_path
-
-          elsif value[1][1] == start && value[1][1] != @skyline_path
-
-          end
-        end
-      end
-      puts "#{path}"
-      find_first_skyline temp_distance[0], terminal, level + 1
-    else
-      puts "--Start is terminal. Complete skyline first path.--"
-      @skyline_path << path
-    end
+    puts "skyline: #{@skyline_path}"
   end
 
 end # class end
