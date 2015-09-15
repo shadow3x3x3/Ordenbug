@@ -69,7 +69,7 @@ class SkyPath
     edges_connect_state = edges
 
     path << start
-    puts "#{path}"
+    puts "path: #{path}"
 
     #### Confirm Terminal ####
     if start != terminal
@@ -93,11 +93,7 @@ class SkyPath
           edges_connect_state[temp_distance[1]][0] = true
           find_first_skyline temp_distance[0], terminal, edges_connect_state, path
           temp_distance = [nil, -1, 10000000000]
-          unless @skyline_path.empty?
-            return
-          end
         else
-          # puts "return"
           path.pop
           return
         end
@@ -105,10 +101,10 @@ class SkyPath
       end # while end
 
     elsif start == terminal # We arrive at terminal!
-      puts "--Start is terminal. Complete skyline first path.--"
-      # puts "final #{path}"
+      puts "--Start is terminal. Complete a skyline path.--"
       skyline_path = Array.new(path)
       @skyline_path << skyline_path
+      path.pop
       puts "skyline_path  #{@skyline_path}"
     end
 
