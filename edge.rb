@@ -10,4 +10,7 @@ class Edge
     @flooding_potential = flooding_potential
   end
 
+  def attr_array
+    [@dist, @lv, @risk, @flooding_potential]
+  end
 end

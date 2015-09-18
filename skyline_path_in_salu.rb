@@ -10,5 +10,6 @@ salu_data_150 = File.read("test.txt")
 
 graph = Graph.new salu_data_150, 4
 graph.shortest_path 0, 5
+graph.testing_unit
 
 

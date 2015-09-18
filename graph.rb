@@ -1,19 +1,51 @@
 require_relative 'edge'
 
+class Array
+  def dominate? array
+    flag       = 0
+    check_flag = self.size
+    raise "Need Array not #{array.class}"    unless array.class == Array
+    raise "Two Arrays are not the same size" unless self.size == array.size
+    self.each_with_index do |attr, index|
+      flag += 1       if attr >  array[index]
+      flag -= 1       if attr <  array[index]
+      check_flag -= 1 if attr == array[index]
+    end
+    return false if flag == check_flag     # be dominated
+    return true  if flag == 0 - check_flag # dominate
+    return nil                             # not dominate
+  end
+
+  def aggregate array
+    aggregate_array = []
+    raise "Need Array not #{array.class}"    unless array.class == Array
+    raise "Two Arrays are not the same size" unless self.size == array.size
+    self.each_with_index do |attr, index|
+      aggregate_array << attr + array[index]
+    end
+    aggregate_array
+  end
+end
+
 class Graph < Array
   attr_reader :edges
 
   def initialize data, attr_num
     @data         = data
+    @attr_num     = attr_num
     @edges        = []
-    @skyline_path = {}
+    @skyline_path = []
     data_to_object @data, attr_num
+  end
+
+  def testing_unit
+    attr_in @skyline_path.first
+    p "first skyline #{attr_in @skyline_path.first}"
   end
 
   def shortest_path src, dst
     (0..1284).each {|node| self.push node }
-    @skyline_path = dijkstra(src, dst)
-    p "skyline Path: #{@skyline_path}"
+    @skyline_path << dijkstra(src, dst)[:path]
   end
 
   def dijkstra src, dst
@@ -35,6 +67,7 @@ class Graph < Array
       break unless distances[nearest_vertex] # Infinity
       if dst and nearest_vertex == dst
         path = get_path(previouses, src, dst)
+        p "path: #{path}, distance: #{distances[dst]}"
         return { path: path, distance: distances[dst] }
       end
       neighbors = vertices.neighbors(nearest_vertex)
@@ -53,6 +86,7 @@ class Graph < Array
     else
       paths = {}
       distances.each { |k, v| paths[k] = get_path(previouses, src, k) }
+      p "path: #{path}, distance: #{distances[dst]}"
       return { paths: paths, distances: distances }
     end
   end # dijkstra end
@@ -68,6 +102,26 @@ class Graph < Array
     neighbors.uniq
   end
 
+  # main algorithm
+  def sky_path src, dst
+    path         = [src]
+    vertex_stack = []
+
+    # Step 1 - Find First Skyline in shortest path
+    shortest_path src, dst
+
+    unless path.last == dst # arrived dst
+      neighbors_vertex = neighbors src
+      neighbors_vertex.each { |vertex| vertex_stack << vertex }
+      path << vertex_stack.pop
+
+      partial_path_dominance_test path
+    else
+      @skyline_path << path
+    end
+
+  end
+
   # find distance with src and dst
   def distance_between src, dst
     @edges.each do |edge|
@@ -77,6 +131,47 @@ class Graph < Array
     nil
   end
 
+  def partial_path_dominance_test path
+    edges_of_path = path_to_edges path
+
+  end
+
+  def full_path_dominance_test path
+
+  end
+
+  # find attr in path
+  def attr_in path
+    sum_array = []
+    @attr_num.times { sum_array << 0 }
+
+    edges_of_path = path_to_edges path
+
+    attr_ful = edges_of_path.inject(sum_array) do |attrs, edges|
+      attrs.aggregate(attr_between edges[0], edges[1])
+    end
+
+    attr_ful
+  end
+
+  # find attr with src and dst
+  def attr_between src, dst
+    @edges.each do |edge|
+      return edge.attr_array if edge.src == src and edge.dst == dst
+      return edge.attr_array if edge.src == dst and edge.dst == src
+    end
+    nil
+  end
+
+  # cut path into edges
+  def path_to_edges path
+    edges_of_path = []
+    path.each_with_index do |vertex, index|
+      edges_of_path << [vertex, path[index+1]] unless vertex == path.last
+    end
+
+    edges_of_path
+  end
 
   private
 
