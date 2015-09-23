@@ -53,7 +53,9 @@ class Graph < Array
 
   def shortest_path src, dst
     (0..1284).each {|node| self.push node }
-    @skyline_path << dijkstra(src, dst)[:path]
+    @skyline_path      << dijkstra(src, dst)[:path]
+    # clac skyline path attr
+    @skyline_path_attr << attr_in(@skyline_path.first)
     # Insert partial skyline from skyline
     @skyline_path.first.each_with_index do |vertex, index|
       unless index == 0 or index == @skyline_path.first.size - 1
@@ -128,13 +130,6 @@ class Graph < Array
       t3 = step.report("Check Skyline")      { @skyline_path = @skyline_path.uniq }
       [t1+t2+t3]
     end
-    # # Step 1 - Find First Skyline in shortest path
-    # p "=====Step1 - Find First Skyline in shortest path======"
-    # puts ""
-    # # Step 2 - Dominance Test
-    # p "===============Step2 - Dominance Test================="
-    # # Step 3 - Check Skyline Path
-
 
   end # sky path end
 
@@ -197,7 +192,8 @@ class Graph < Array
 
       else                    # arrived dst
         skyline_path = Array.new(path)
-        @skyline_path << skyline_path
+        @skyline_path      << skyline_path
+        @skyline_path_attr << attr_in(skyline_path)
       end
 
       edges.each do |edge|
@@ -220,11 +216,14 @@ class Graph < Array
   end
 
   def full_path_dominance_test path_attr_sum
-    @skyline_path.each do |sp|
-      sp_attr_sum = attr_in sp
-      return false if sp_attr_sum.dominate? path_attr_sum
+    @skyline_path_attr.each do |sp|
+      return false if sp.dominate? path_attr_sum
     end
     true
+  end
+
+  def skyline_check
+    @skyline_path.each
   end
 
   # find distance with src and dst
@@ -241,7 +240,6 @@ class Graph < Array
     sum_array = []
     unless path.size <= 2
       @attr_num.times { sum_array << 0 }
-
       edges_of_path = path_to_edges path
       attr_full = edges_of_path.inject(sum_array) do |attrs, edges|
         attrs.aggregate(attr_between edges[0], edges[1])
@@ -267,7 +265,6 @@ class Graph < Array
     path.each_with_index do |vertex, index|
       edges_of_path << [vertex, path[index+1]] unless vertex == path.last
     end
-
     edges_of_path
   end
 
