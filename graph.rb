@@ -43,8 +43,9 @@ class Graph < Array
   end
 
   def testing_unit
-    sky_path 387, 999
+    sky_path 38, 1233
     puts ""
+    puts  "We found #{@skyline_path.size} skylines"
     @skyline_path.each do |sp|
       puts "skyline: #{sp} #{attr_in sp}"
     end
@@ -122,12 +123,13 @@ class Graph < Array
 
   # sky path algorithm
   def sky_path src, dst
-    p "******* SkyPath - Source: #{src}, destination: #{dst} ******"
+    puts ""
+    puts "     ******* SkyPath - Source: #{src}, destination: #{dst} ******"
     path = [src]
-    Benchmark.benchmark(CAPTION, 20, FORMAT, ">total:") do |step|
+    Benchmark.benchmark(CAPTION, 22, FORMAT, ">total:") do |step|
       t1 = step.report("Find First Skyline") { shortest_path src, dst }
       t2 = step.report("Dominance Test")     { dominance_test src, dst, path }
-      t3 = step.report("Check Skyline")      { @skyline_path = @skyline_path.uniq }
+      t3 = step.report("Check Skyline")      { skyline_check }
       [t1+t2+t3]
     end
 
@@ -146,14 +148,10 @@ class Graph < Array
         end
       end
     end
-    # p neighbors_vertex
 
     # Find next vertex and attributes
     until vertex_stack.empty?
-      # p "#{src} neighbors: #{vertex_stack}"
       path << vertex_stack.pop # take a candicate vertex to path
-      # p "Now with path: #{path}"
-      # p "pop #{vertex_stack}"
 
       #Step 2-1 - Partial path dominance test
       unless attr_previous.nil?
@@ -223,7 +221,15 @@ class Graph < Array
   end
 
   def skyline_check
-    @skyline_path.each
+    @skyline_path = @skyline_path.uniq
+    @skyline_path_attr.each_with_index do |sp_a, index|
+      @skyline_path_attr.each_with_index do |comp_sp, comp_index|
+        if  (index != comp_index) && (sp_a.dominate? comp_sp)
+          @skyline_path.delete_at(@skyline_path_attr.index(comp_sp))
+          @skyline_path_attr.delete_at(@skyline_path_attr.index(comp_sp))
+        end
+      end
+    end
   end
 
   # find distance with src and dst
