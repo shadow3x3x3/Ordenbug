@@ -57,11 +57,6 @@ class SkyPath
     data_hash
   end
 
-  # find first skyline with shorst distance
-  # By dijkstra
-  def dijkstra source
-
-  end
 
   # find first skyline with shorst distance
   # value[0]: used or not

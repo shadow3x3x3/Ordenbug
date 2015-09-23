@@ -1,16 +1,21 @@
 class Edge
-  attr_accessor :src, :dst, :dist, :lv, :risk, :flooding_potential
+  attr_accessor :src, :dst, :dist, :lv, :risk, :flooding_potential, :used_state
 
-  def initialize(src, dst, dist, lv, risk, flooding_potential)
+  def initialize(src, dst, dist, lv = nil, risk = nil, flooding_potential = nil)
     @src                = src
     @dst                = dst
     @dist               = dist
     @lv                 = lv
     @risk               = risk
     @flooding_potential = flooding_potential
+    @used_state         = false
   end
 
   def attr_array
-    [@dist, @lv, @risk, @flooding_potential]
+    array = [@dist, @lv, @risk, @flooding_potential]
+    array.delete_at(1) if @lv.nil?
+    array.delete_at(2) if @risk.nil?
+    array.delete_at(2) if @flooding_potential.nil?
+    array
   end
 end

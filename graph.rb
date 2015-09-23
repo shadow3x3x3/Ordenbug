@@ -1,4 +1,6 @@
 require_relative 'edge'
+require 'benchmark'
+include Benchmark
 
 class Array
   def dominate? array
@@ -31,25 +33,39 @@ class Graph < Array
   attr_reader :edges
 
   def initialize data, attr_num
-    @data         = data
-    @attr_num     = attr_num
-    @edges        = []
-    @skyline_path = []
+    @data              = data
+    @attr_num          = attr_num
+    @edges             = []
+    @skyline_path      = []
+    @skyline_path_attr = []
+    @part_skyline_attr = {}
     data_to_object @data, attr_num
   end
 
   def testing_unit
-    attr_in @skyline_path.first
-    p "first skyline #{attr_in @skyline_path.first}"
+    sky_path 387, 999
+    puts ""
+    @skyline_path.each do |sp|
+      puts "skyline: #{sp} #{attr_in sp}"
+    end
+
   end
 
   def shortest_path src, dst
     (0..1284).each {|node| self.push node }
     @skyline_path << dijkstra(src, dst)[:path]
+    # Insert partial skyline from skyline
+    @skyline_path.first.each_with_index do |vertex, index|
+      unless index == 0 or index == @skyline_path.first.size - 1
+        no = "#{@skyline_path.first[0].to_s}_#{vertex}"
+        path_attr_sum = attr_in @skyline_path.first[0..index]
+        @part_skyline_attr["p#{no}".to_sym] = path_attr_sum
+      end
+    end
   end
 
   def dijkstra src, dst
-    distances = {}
+    distances  = {}
     previouses = {}
     self.each do |vertex|
       distances[vertex]  = nil # Infinity
@@ -67,7 +83,7 @@ class Graph < Array
       break unless distances[nearest_vertex] # Infinity
       if dst and nearest_vertex == dst
         path = get_path(previouses, src, dst)
-        p "path: #{path}, distance: #{distances[dst]}"
+        # p "path: #{path}, distance: #{distances[dst]}"
         return { path: path, distance: distances[dst] }
       end
       neighbors = vertices.neighbors(nearest_vertex)
@@ -98,28 +114,117 @@ class Graph < Array
       neighbors.push edge.dst if edge.src == vertex
       neighbors.push edge.src if edge.dst == vertex
     end
-
+    # p neighbors
     neighbors.uniq
   end
 
-  # main algorithm
+  # sky path algorithm
   def sky_path src, dst
-    path         = [src]
-    vertex_stack = []
-
-    # Step 1 - Find First Skyline in shortest path
-    shortest_path src, dst
-
-    unless path.last == dst # arrived dst
-      neighbors_vertex = neighbors src
-      neighbors_vertex.each { |vertex| vertex_stack << vertex }
-      path << vertex_stack.pop
-
-      partial_path_dominance_test path
-    else
-      @skyline_path << path
+    p "******* SkyPath - Source: #{src}, destination: #{dst} ******"
+    path = [src]
+    Benchmark.benchmark(CAPTION, 20, FORMAT, ">total:") do |step|
+      t1 = step.report("Find First Skyline") { shortest_path src, dst }
+      t2 = step.report("Dominance Test")     { dominance_test src, dst, path }
+      t3 = step.report("Check Skyline")      { @skyline_path = @skyline_path.uniq }
+      [t1+t2+t3]
     end
+    # # Step 1 - Find First Skyline in shortest path
+    # p "=====Step1 - Find First Skyline in shortest path======"
+    # puts ""
+    # # Step 2 - Dominance Test
+    # p "===============Step2 - Dominance Test================="
+    # # Step 3 - Check Skyline Path
 
+
+  end # sky path end
+
+  # Dominance Test Function
+  def dominance_test src, dst, path, vertices = self.clone, edges = @edges.clone, attr_previous = nil
+    vertex_stack = []
+    neighbors_vertex = neighbors src
+    neighbors_vertex.each do |vertex|
+      if vertices.include? vertex
+        edges.each do |edge|
+          if (edge.src == src and edge.dst == vertex) or (edge.src == vertex and edge.dst == src)
+            vertex_stack << vertex unless edge.used_state
+          end
+        end
+      end
+    end
+    # p neighbors_vertex
+
+    # Find next vertex and attributes
+    until vertex_stack.empty?
+      # p "#{src} neighbors: #{vertex_stack}"
+      path << vertex_stack.pop # take a candicate vertex to path
+      # p "Now with path: #{path}"
+      # p "pop #{vertex_stack}"
+
+      #Step 2-1 - Partial path dominance test
+      unless attr_previous.nil?
+        path_attr_sum = attr_previous.aggregate(attr_between src, path.last)
+      else
+        path_attr_sum = attr_between src, path.last
+      end
+
+      unless partial_path_dominance_test path, path_attr_sum
+        # p "#{path} is dominated by partial path "
+        path.pop
+        next
+      end
+
+      #Step 2-2 - Full path dominance test
+      unless full_path_dominance_test path_attr_sum
+        # p "#{path} is dominated by full path "
+        path.pop
+        next
+      end
+
+      unless path.last == dst # not arrived dst
+        if path.size > 2
+          part_skyline = Array.new(path)
+          no = "#{part_skyline[0].to_s}_#{part_skyline.last}"
+          @part_skyline_attr["p#{no}".to_sym] = path_attr_sum
+        end
+
+        edges.each do |edge|
+          if (edge.src == path[path.size - 2] and edge.dst == path.last) or (edge.src == path.last and edge.dst == path[path.size - 2])
+              edge.used_state = true
+          end
+        end
+        vertices.delete path.last
+        dominance_test path.last, dst, path, vertices, edges, path_attr_sum
+
+      else                    # arrived dst
+        skyline_path = Array.new(path)
+        @skyline_path << skyline_path
+      end
+
+      edges.each do |edge|
+        if (edge.src == path[path.size - 2] and edge.dst == path.last) or (edge.src == path.last and edge.dst == path[path.size - 2])
+            edge.used_state =  false
+        end
+      end
+      vertices << path.last
+      path.pop
+    end # until End
+
+  end
+
+  def partial_path_dominance_test path, path_attr_sum
+    path_key = "p#{path.first}_#{path.last}".to_sym
+    test_result =
+      @part_skyline_attr[path_key].dominate? path_attr_sum unless @part_skyline_attr[path_key].nil?
+    return false if test_result
+    return true # path isn't dominated by any ps
+  end
+
+  def full_path_dominance_test path_attr_sum
+    @skyline_path.each do |sp|
+      sp_attr_sum = attr_in sp
+      return false if sp_attr_sum.dominate? path_attr_sum
+    end
+    true
   end
 
   # find distance with src and dst
@@ -131,27 +236,20 @@ class Graph < Array
     nil
   end
 
-  def partial_path_dominance_test path
-    edges_of_path = path_to_edges path
-
-  end
-
-  def full_path_dominance_test path
-
-  end
-
   # find attr in path
   def attr_in path
     sum_array = []
-    @attr_num.times { sum_array << 0 }
+    unless path.size <= 2
+      @attr_num.times { sum_array << 0 }
 
-    edges_of_path = path_to_edges path
-
-    attr_ful = edges_of_path.inject(sum_array) do |attrs, edges|
-      attrs.aggregate(attr_between edges[0], edges[1])
+      edges_of_path = path_to_edges path
+      attr_full = edges_of_path.inject(sum_array) do |attrs, edges|
+        attrs.aggregate(attr_between edges[0], edges[1])
+      end
+    else
+      attr_full = attr_between path.first, path.last
     end
-
-    attr_ful
+    attr_full
   end
 
   # find attr with src and dst
@@ -172,8 +270,6 @@ class Graph < Array
 
     edges_of_path
   end
-
-  private
 
   # clear data
   def data_to_object data, attr_num
