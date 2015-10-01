@@ -103,7 +103,7 @@ class Graph < Array
 
   end
 
-  def testing_unit_single
+  def testing_unit_single src, dst
     sky_path src, dst
     puts  "We found #{@skyline_path.size} skylines"
     puts ""
@@ -251,8 +251,8 @@ class Graph < Array
         dominance_test path.last, dst, path, vertices, edges, path_attr_sum
 
       else                    # arrived dst
-        skyline_path      = Array.new(path)
-        skyline_path_attr = attr_in(skyline_path)
+        skyline_path       = Array.new(path)
+        skyline_path_attr  = attr_in(skyline_path)
         @skyline_path      << skyline_path
         @skyline_path_attr << attr_in(skyline_path)
       end
