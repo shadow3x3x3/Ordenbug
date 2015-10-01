@@ -42,24 +42,84 @@ class Graph < Array
     data_to_object @data, attr_num
   end
 
-  def testing_unit
-    sky_path 38, 1233
-    puts ""
-    puts  "We found #{@skyline_path.size} skylines"
-    @skyline_path.each do |sp|
-      puts "skyline: #{sp} #{attr_in sp}"
+  def testing_unit_multiple
+    count_times      = 0
+    ten_sec_times    = 0
+    thirty_sec_times = 0
+    one_min_times    = 0
+    two_min_times    = 0
+    five_min_times   = 0
+    ten_min_times    = 0
+    thirty_min_times = 0
+    one_hr_times     = 0
+    over_hr_times    = 0
+
+    300.times do
+      src = rand(1284)
+      dst = rand(1284)
+      unless src == dst
+        query_time = sky_path src, dst
+        case query_time
+        when 0..10
+          ten_sec_times    += 1
+        when 11..30
+          thirty_sec_times += 1
+        when 31..60
+          one_min_times    += 1
+        when 61..120
+          two_min_times    += 1
+        when 121..300
+          five_min_times   += 1
+        when 301..600
+          ten_min_times    += 1
+        when 601..1800
+          thirty_min_times += 1
+        when 1801..3600
+          one_hr_times     += 1
+        else # over 1 hour
+          over_hr_times    += 1
+        end
+        count_times += 1
+        puts "In #{count_times}ed"
+        puts "We found #{@skyline_path.size} skylines"
+        @skyline_path      = []
+        @skyline_path_attr = []
+        @part_skyline_attr = {}
+        puts ""
+        puts "under 10  : #{ten_sec_times}"
+        puts "10 to 30  : #{thirty_sec_times}"
+        puts "30 to 60  : #{one_min_times}"
+        puts "60 to 2m  : #{two_min_times}"
+        puts "2m to 5m  : #{five_min_times}"
+        puts "5m to 10m : #{ten_min_times}"
+        puts "10m to 30m: #{thirty_min_times}"
+        puts "30m to 1h : #{one_hr_times}"
+        puts "over 1hr  : #{over_hr_times}"
+        puts ""
+      else
+        redo
+      end
     end
 
   end
 
+  def testing_unit_single
+    sky_path src, dst
+    puts  "We found #{@skyline_path.size} skylines"
+    puts ""
+    @skyline_path.each do |sp|
+      puts "skyline: #{sp} #{attr_in sp}"
+    end
+  end
+
   def shortest_path src, dst
-    (0..1284).each {|node| self.push node }
+    (0..1283).each {|node| self.push node }
     @skyline_path      << dijkstra(src, dst)[:path]
     # clac skyline path attr
     @skyline_path_attr << attr_in(@skyline_path.first)
     # Insert partial skyline from skyline
     @skyline_path.first.each_with_index do |vertex, index|
-      unless index == 0 or index == @skyline_path.first.size - 1
+      unless index < 1
         no = "#{@skyline_path.first[0].to_s}_#{vertex}"
         path_attr_sum = attr_in @skyline_path.first[0..index]
         @part_skyline_attr["p#{no}".to_sym] = path_attr_sum
@@ -126,12 +186,16 @@ class Graph < Array
     puts ""
     puts "     ******* SkyPath - Source: #{src}, destination: #{dst} ******"
     path = [src]
-    Benchmark.benchmark(CAPTION, 22, FORMAT, ">total:") do |step|
+    t1 = t2 = t3 = total = 0
+
+    Benchmark.benchmark(CAPTION, 22, FORMAT, "total:") do |step|
       t1 = step.report("Find First Skyline") { shortest_path src, dst }
       t2 = step.report("Dominance Test")     { dominance_test src, dst, path }
       t3 = step.report("Check Skyline")      { skyline_check }
-      [t1+t2+t3]
+      total = [t1+t2+t3]
     end
+
+    return total[0].to_a.last
 
   end # sky path end
 
@@ -174,11 +238,9 @@ class Graph < Array
       end
 
       unless path.last == dst # not arrived dst
-        if path.size > 2
-          part_skyline = Array.new(path)
-          no = "#{part_skyline[0].to_s}_#{part_skyline.last}"
-          @part_skyline_attr["p#{no}".to_sym] = path_attr_sum
-        end
+        part_skyline = Array.new(path)
+        no = "#{part_skyline[0].to_s}_#{part_skyline.last}"
+        @part_skyline_attr["p#{no}".to_sym] = path_attr_sum
 
         edges.each do |edge|
           if (edge.src == path[path.size - 2] and edge.dst == path.last) or (edge.src == path.last and edge.dst == path[path.size - 2])
@@ -189,7 +251,8 @@ class Graph < Array
         dominance_test path.last, dst, path, vertices, edges, path_attr_sum
 
       else                    # arrived dst
-        skyline_path = Array.new(path)
+        skyline_path      = Array.new(path)
+        skyline_path_attr = attr_in(skyline_path)
         @skyline_path      << skyline_path
         @skyline_path_attr << attr_in(skyline_path)
       end
@@ -224,7 +287,7 @@ class Graph < Array
     @skyline_path = @skyline_path.uniq
     @skyline_path_attr.each_with_index do |sp_a, index|
       @skyline_path_attr.each_with_index do |comp_sp, comp_index|
-        if  (index != comp_index) && (sp_a.dominate? comp_sp)
+        if (index != comp_index) && (sp_a.dominate? comp_sp)
           @skyline_path.delete_at(@skyline_path_attr.index(comp_sp))
           @skyline_path_attr.delete_at(@skyline_path_attr.index(comp_sp))
         end

@@ -13,6 +13,7 @@ salu_data_150 = File.read("edag_150mm.txt")
 graph = Graph.new salu_data_150, 4
 # graph.neighbors 78
 # graph.shortest_path 0, 99
-graph.testing_unit
+graph.testing_unit_multiple
+# graph.testing_unit_single
 
 
