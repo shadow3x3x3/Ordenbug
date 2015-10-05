@@ -113,7 +113,7 @@ class Graph < Array
   end
 
   def shortest_path src, dst
-    (0..1283).each {|node| self.push node }
+    (0..1284).each {|node| self.push node }
     @skyline_path      << dijkstra(src, dst)[:path]
     # clac skyline path attr
     @skyline_path_attr << attr_in(@skyline_path.first)
@@ -177,7 +177,6 @@ class Graph < Array
       neighbors.push edge.dst if edge.src == vertex
       neighbors.push edge.src if edge.dst == vertex
     end
-    # p neighbors
     neighbors.uniq
   end
 
@@ -194,7 +193,7 @@ class Graph < Array
       t3 = step.report("Check Skyline")      { skyline_check }
       total = [t1+t2+t3]
     end
-
+    puts "#{@part_skyline_attr.size}"
     return total[0].to_a.last
 
   end # sky path end
@@ -203,9 +202,10 @@ class Graph < Array
   def dominance_test src, dst, path, vertices = self.clone, edges = @edges.clone, attr_previous = nil
     vertex_stack = []
     neighbors_vertex = neighbors src
+    edges_this = edges.clone
     neighbors_vertex.each do |vertex|
       if vertices.include? vertex
-        edges.each do |edge|
+        edges_this.each do |edge|
           if (edge.src == src and edge.dst == vertex) or (edge.src == vertex and edge.dst == src)
             vertex_stack << vertex unless edge.used_state
           end
@@ -216,7 +216,7 @@ class Graph < Array
     # Find next vertex and attributes
     until vertex_stack.empty?
       path << vertex_stack.pop # take a candicate vertex to path
-
+      puts "#{path} is current path"
       #Step 2-1 - Partial path dominance test
       unless attr_previous.nil?
         path_attr_sum = attr_previous.aggregate(attr_between src, path.last)
@@ -225,14 +225,14 @@ class Graph < Array
       end
 
       unless partial_path_dominance_test path, path_attr_sum
-        # p "#{path} is dominated by partial path "
+        p "#{path} is dominated by partial path "
         path.pop
         next
       end
 
       #Step 2-2 - Full path dominance test
       unless full_path_dominance_test path_attr_sum
-        # p "#{path} is dominated by full path "
+        p "#{path} is dominated by full path "
         path.pop
         next
       end
@@ -242,13 +242,13 @@ class Graph < Array
         no = "#{part_skyline[0].to_s}_#{part_skyline.last}"
         @part_skyline_attr["p#{no}".to_sym] = path_attr_sum
 
-        edges.each do |edge|
+        edges_this.each do |edge|
           if (edge.src == path[path.size - 2] and edge.dst == path.last) or (edge.src == path.last and edge.dst == path[path.size - 2])
               edge.used_state = true
           end
         end
         vertices.delete path.last
-        dominance_test path.last, dst, path, vertices, edges, path_attr_sum
+        dominance_test path.last, dst, path, vertices, edges_this, path_attr_sum
 
       else                    # arrived dst
         skyline_path       = Array.new(path)
@@ -257,11 +257,6 @@ class Graph < Array
         @skyline_path_attr << attr_in(skyline_path)
       end
 
-      edges.each do |edge|
-        if (edge.src == path[path.size - 2] and edge.dst == path.last) or (edge.src == path.last and edge.dst == path[path.size - 2])
-            edge.used_state =  false
-        end
-      end
       vertices << path.last
       path.pop
     end # until End
