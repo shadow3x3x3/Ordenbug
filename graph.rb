@@ -2,7 +2,11 @@ require_relative 'edge'
 require 'benchmark'
 include Benchmark
 
+# 避難區找最短點
+
+# Open Array Class
 class Array
+  # dominate function in skyline for array
   def dominate? array
     flag       = 0
     check_flag = self.size
@@ -17,7 +21,7 @@ class Array
     return true  if flag == 0 - check_flag # dominate
     return nil                             # not dominate
   end
-
+  # skyline attributes aggregate for array
   def aggregate array
     aggregate_array = []
     raise "Need Array not #{array.class}"    unless array.class == Array
@@ -80,6 +84,7 @@ class Graph < Array
           over_hr_times    += 1
         end
         count_times += 1
+
         puts "In #{count_times}ed"
         puts "We found #{@skyline_path.size} skylines"
         @skyline_path      = []
@@ -105,14 +110,41 @@ class Graph < Array
 
   def testing_unit_single src, dst
     sky_path src, dst
-    puts  "We found #{@skyline_path.size} skylines"
+    puts "We found #{@skyline_path.size} skylines"
     puts ""
     @skyline_path.each do |sp|
-      puts "skyline: #{sp} #{attr_in sp}"
+      puts "skyline : #{sp}"
+      puts "attr: #{attr_in sp}"
+      puts ""
+      # puts "edges id: #{path_to_edges_id sp} "
+    end
+    write_into_txt src, dst
+  end
+
+  # WRITE
+  def write_into_txt src, dst
+    File.open("#{src}to#{dst}_skyline_path_result.txt", "w") do |file|
+      @skyline_path.each do |sp|
+        sp_id_array = path_to_edges_id sp
+
+        sp_id_array.each_with_index do |sp_id, index|
+          unless index == sp_id_array.size - 1
+            file.write("\"id\" = #{sp_id} OR ")
+          else
+            file.write("\"id\" = #{sp_id}\n")
+          end
+
+        end
+        # "id" = 34 OR "id" = 33....
+
+      end
     end
   end
 
   def shortest_path src, dst
+    @skyline_path      = []
+    @skyline_path_attr = []
+    @part_skyline_attr = {}
     (0..1284).each {|node| self.push node }
     @skyline_path      << dijkstra(src, dst)[:path]
     # clac skyline path attr
@@ -120,7 +152,7 @@ class Graph < Array
     # Insert partial skyline from skyline
     @skyline_path.first.each_with_index do |vertex, index|
       unless index < 1
-        no = "#{@skyline_path.first[0].to_s}_#{vertex}"
+        no = "#{@skyline_path.first.first.to_s}_#{vertex}"
         path_attr_sum = attr_in @skyline_path.first[0..index]
         @part_skyline_attr["p#{no}".to_sym] = path_attr_sum
       end
@@ -184,83 +216,100 @@ class Graph < Array
   def sky_path src, dst
     puts ""
     puts "     ******* SkyPath - Source: #{src}, destination: #{dst} ******"
-    path = [src]
     t1 = t2 = t3 = total = 0
 
     Benchmark.benchmark(CAPTION, 22, FORMAT, "total:") do |step|
       t1 = step.report("Find First Skyline") { shortest_path src, dst }
-      t2 = step.report("Dominance Test")     { dominance_test src, dst, path }
-      t3 = step.report("Check Skyline")      { skyline_check }
-      total = [t1+t2+t3]
+      t2 = step.report("Dominance Test")     { dominance_test src, dst, [src] }
+      # t3 = step.report("Check Skyline")      { skyline_check }
+      total = [t1+t2]
     end
-    puts "#{@part_skyline_attr.size}"
-    return total[0].to_a.last
-
+    total[0].to_a.last
   end # sky path end
 
   # Dominance Test Function
   def dominance_test src, dst, path, vertices = self.clone, edges = @edges.clone, attr_previous = nil
     vertex_stack = []
+    # puts ""
+    # puts "path: #{path}"
     neighbors_vertex = neighbors src
-    edges_this = edges.clone
     neighbors_vertex.each do |vertex|
       if vertices.include? vertex
-        edges_this.each do |edge|
+        edges.each do |edge|
           if (edge.src == src and edge.dst == vertex) or (edge.src == vertex and edge.dst == src)
             vertex_stack << vertex unless edge.used_state
           end
         end
       end
     end
-
+    # puts "neighbors: #{vertex_stack}"
     # Find next vertex and attributes
     until vertex_stack.empty?
+      temp_edge = []
+      # Adding attributes with new node
       path << vertex_stack.pop # take a candicate vertex to path
-      puts "#{path} is current path"
-      #Step 2-1 - Partial path dominance test
+      # puts "Add #{path.last}, #{path} is current path"
       unless attr_previous.nil?
         path_attr_sum = attr_previous.aggregate(attr_between src, path.last)
       else
         path_attr_sum = attr_between src, path.last
       end
 
-      unless partial_path_dominance_test path, path_attr_sum
-        p "#{path} is dominated by partial path "
+
+      # Step 2-1 - Constrained length test
+      unless constrained_length_test path_attr_sum
         path.pop
         next
       end
 
-      #Step 2-2 - Full path dominance test
+      # Step 2-2 - Partial path dominance test
+      unless partial_path_dominance_test path, path_attr_sum
+        # p "#{path} is dominated by partial path "
+        path.pop
+        next
+      end
+
+      # Step 2-3 - Full path dominance test
       unless full_path_dominance_test path_attr_sum
-        p "#{path} is dominated by full path "
+        # p "#{path} is dominated by full path "
         path.pop
         next
       end
 
       unless path.last == dst # not arrived dst
         part_skyline = Array.new(path)
-        no = "#{part_skyline[0].to_s}_#{part_skyline.last}"
+        no = "#{part_skyline.first.to_s}_#{part_skyline.last}"
         @part_skyline_attr["p#{no}".to_sym] = path_attr_sum
 
-        edges_this.each do |edge|
+        edges.each do |edge|
           if (edge.src == path[path.size - 2] and edge.dst == path.last) or (edge.src == path.last and edge.dst == path[path.size - 2])
-              edge.used_state = true
+            edge.used_state = true
+            temp_edge = edge
           end
         end
         vertices.delete path.last
-        dominance_test path.last, dst, path, vertices, edges_this, path_attr_sum
+        dominance_test path.last, dst, path, vertices, edges, path_attr_sum
+        # puts "Back to: #{path}"
+        edges.each do |edge|
+          if (edge == temp_edge)
+            edge.used_state = false
+          end
+        end
 
-      else                    # arrived dst
-        skyline_path       = Array.new(path)
-        skyline_path_attr  = attr_in(skyline_path)
-        @skyline_path      << skyline_path
-        @skyline_path_attr << attr_in(skyline_path)
+      else                     # arrived dst
+        skyline_path_candidate = Array.new(path)
+        skyline_check skyline_path_candidate
       end
 
       vertices << path.last
       path.pop
     end # until End
 
+  end # Dominance Test End
+
+  def constrained_length_test path_attr_sum
+    return false if path_attr_sum[0] > @skyline_path_attr.first.first * 5 # over length
+    true
   end
 
   def partial_path_dominance_test path, path_attr_sum
@@ -268,7 +317,7 @@ class Graph < Array
     test_result =
       @part_skyline_attr[path_key].dominate? path_attr_sum unless @part_skyline_attr[path_key].nil?
     return false if test_result
-    return true # path isn't dominated by any ps
+    true # path isn't dominated by any ps
   end
 
   def full_path_dominance_test path_attr_sum
@@ -278,16 +327,40 @@ class Graph < Array
     true
   end
 
-  def skyline_check
-    @skyline_path = @skyline_path.uniq
+  # def skyline_check
+  #   @skyline_path_attr.each_with_index do |sp_a, index|
+  #     unless index == @skyline_path_attr.size - 1
+  #       case sp_a.dominate? @skyline_path_attr.last
+  #       when true
+  #         @skyline_path.pop
+  #         @skyline_path_attr.pop
+  #       when false
+  #         @skyline_path.pop(index)
+  #         @skyline_path_attr.pop(index)
+  #       when nil
+  #         # do nothing
+  #       end
+  #     end
+  #   end
+  # end
+
+  def skyline_check skyline_path_candidate
+    candidate = attr_in skyline_path_candidate
+    @skyline_path.uniq!
+    @skyline_path_attr.uniq!
     @skyline_path_attr.each_with_index do |sp_a, index|
-      @skyline_path_attr.each_with_index do |comp_sp, comp_index|
-        if (index != comp_index) && (sp_a.dominate? comp_sp)
-          @skyline_path.delete_at(@skyline_path_attr.index(comp_sp))
-          @skyline_path_attr.delete_at(@skyline_path_attr.index(comp_sp))
-        end
+      case sp_a.dominate? candidate
+      when true
+        return
+      when false
+        @skyline_path.delete_at(index)
+        @skyline_path_attr.delete_at(index)
+      when nil
+        next
       end
     end
+    @skyline_path      << skyline_path_candidate
+    @skyline_path_attr << candidate
   end
 
   # find distance with src and dst
@@ -298,6 +371,7 @@ class Graph < Array
     end
     nil
   end
+
 
   # find attr in path
   def attr_in path
@@ -344,11 +418,26 @@ class Graph < Array
     i = 0
     norm_data.each_with_index do |value, index|
       if index % (attr_num + 3) == 0
-        @edges.push Edge.new(*norm_data[i+1..i+2+attr_num])
+        @edges.push Edge.new(*norm_data[i..i+2+attr_num])
         i += (attr_num + 3)
       end
     end
   end # data to object done
+
+  def path_to_edges_id path
+    edges_id_of_path = []
+    path.each_with_index do |vertex, index|
+      unless index == path.size - 1
+        next_vertex = path[index+1]
+        @edges.each do |edge|
+          edges_id_of_path << edge.id if edge.src == vertex and edge.dst == next_vertex
+          edges_id_of_path << edge.id if edge.src == next_vertex and edge.dst == vertex
+        end
+      end
+    end
+    edges_id_of_path
+  end
+
 
   def get_path(previouses, src, dest)
     path = get_path_recursively(previouses, src, dest)
