@@ -36,14 +36,15 @@ end
 class Graph < Array
   attr_reader :edges
 
-  def initialize data, attr_num
+  def initialize data:, dim:, constrained_times: 5
     @data              = data
-    @attr_num          = attr_num
+    @dim               = dim
+    @constrained_times = constrained_times
     @edges             = []
     @skyline_path      = []
     @skyline_path_attr = []
     @part_skyline_attr = {}
-    data_to_object @data, attr_num
+    data_to_object @data, dim
   end
 
   def testing_unit_multiple
@@ -123,7 +124,7 @@ class Graph < Array
 
   # WRITE
   def write_into_txt src, dst
-    File.open("#{src}to#{dst}_skyline_path_result.txt", "w") do |file|
+    File.open("#{src}to#{dst}_in_#{@constrained_times}times_skyline_path_result.txt", "w") do |file|
       @skyline_path.each do |sp|
         sp_id_array = path_to_edges_id sp
 
@@ -215,7 +216,7 @@ class Graph < Array
   # sky path algorithm
   def sky_path src, dst
     puts ""
-    puts "     ******* SkyPath - Source: #{src}, destination: #{dst} ******"
+    puts "     ******* SkyPath - Source: #{src}, destination: #{dst}, Constrained Times: #{@constrained_times}  ******"
     t1 = t2 = t3 = total = 0
 
     Benchmark.benchmark(CAPTION, 22, FORMAT, "total:") do |step|
@@ -308,7 +309,7 @@ class Graph < Array
   end # Dominance Test End
 
   def constrained_length_test path_attr_sum
-    return false if path_attr_sum[0] > @skyline_path_attr.first.first * 5 # over length
+    return false if path_attr_sum[0] > @skyline_path_attr.first.first * @constrained_times # over length
     true
   end
 
@@ -326,23 +327,6 @@ class Graph < Array
     end
     true
   end
-
-  # def skyline_check
-  #   @skyline_path_attr.each_with_index do |sp_a, index|
-  #     unless index == @skyline_path_attr.size - 1
-  #       case sp_a.dominate? @skyline_path_attr.last
-  #       when true
-  #         @skyline_path.pop
-  #         @skyline_path_attr.pop
-  #       when false
-  #         @skyline_path.pop(index)
-  #         @skyline_path_attr.pop(index)
-  #       when nil
-  #         # do nothing
-  #       end
-  #     end
-  #   end
-  # end
 
   def skyline_check skyline_path_candidate
     candidate = attr_in skyline_path_candidate
@@ -377,7 +361,7 @@ class Graph < Array
   def attr_in path
     sum_array = []
     unless path.size <= 2
-      @attr_num.times { sum_array << 0 }
+      @dim.times { sum_array << 0 }
       edges_of_path = path_to_edges path
       attr_full = edges_of_path.inject(sum_array) do |attrs, edges|
         attrs.aggregate(attr_between edges[0], edges[1])
@@ -407,9 +391,9 @@ class Graph < Array
   end
 
   # clear data
-  def data_to_object data, attr_num
+  def data_to_object data, dim
     norm_data = data.split(" ").map.each_with_index do |value, index|
-      if (0..2) === index % (attr_num + 3)
+      if (0..2) === index % (dim + 3)
         value.to_i
       else
         value.to_f
@@ -417,9 +401,9 @@ class Graph < Array
     end
     i = 0
     norm_data.each_with_index do |value, index|
-      if index % (attr_num + 3) == 0
-        @edges.push Edge.new(*norm_data[i..i+2+attr_num])
-        i += (attr_num + 3)
+      if index % (dim + 3) == 0
+        @edges.push Edge.new(*norm_data[i..i+2+dim])
+        i += (dim + 3)
       end
     end
   end # data to object done
