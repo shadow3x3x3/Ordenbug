@@ -36,7 +36,7 @@ end
 class Graph < Array
   attr_reader :edges
 
-  def initialize data:, dim:, constrained_times: 5
+  def initialize data:, dim:, constrained_times: nil
     @data              = data
     @dim               = dim
     @constrained_times = constrained_times
@@ -124,7 +124,7 @@ class Graph < Array
 
   # WRITE
   def write_into_txt src, dst
-    File.open("#{src}to#{dst}_in_#{@constrained_times}times_skyline_path_result.txt", "w") do |file|
+    File.open("#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
       @skyline_path.each do |sp|
         sp_id_array = path_to_edges_id sp
 
@@ -142,6 +142,7 @@ class Graph < Array
     end
   end
 
+  # dijkstra
   def shortest_path src, dst
     @skyline_path      = []
     @skyline_path_attr = []
@@ -258,9 +259,11 @@ class Graph < Array
 
 
       # Step 2-1 - Constrained length test
-      unless constrained_length_test path_attr_sum
-        path.pop
-        next
+      unless @constrained_times.nil?
+        unless constrained_length_test path_attr_sum
+          path.pop
+          next
+        end
       end
 
       # Step 2-2 - Partial path dominance test
@@ -356,7 +359,6 @@ class Graph < Array
     nil
   end
 
-
   # find attr in path
   def attr_in path
     sum_array = []
@@ -421,7 +423,6 @@ class Graph < Array
     end
     edges_id_of_path
   end
-
 
   def get_path(previouses, src, dest)
     path = get_path_recursively(previouses, src, dest)

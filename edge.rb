@@ -14,9 +14,5 @@ class Edge
 
   def attr_array
     array = [@dist, @lv, @risk, @flooding_potential]
-    array.delete_at(1) if @lv.nil?
-    array.delete_at(2) if @risk.nil?
-    array.delete_at(2) if @flooding_potential.nil?
-    array
   end
 end
