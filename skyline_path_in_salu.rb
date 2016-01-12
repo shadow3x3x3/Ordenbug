@@ -13,6 +13,7 @@ times = 0.5
 (TEST_CONSTRAINED * 2 - 1).times do
   times += 0.5
   graph = Graph.new(data: salu_data, dim: 4, constrained_times: times)
+  # graph.testing_unit_single 78, 458
   graph.testing_unit_single 159, 381
 end
 
