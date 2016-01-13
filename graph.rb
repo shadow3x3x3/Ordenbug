@@ -36,7 +36,7 @@ end
 class Graph < Array
   attr_reader :edges
 
-  def initialize(data:, dim:, constrained_times: nil)
+  def initialize(data: nil, dim: nil, constrained_times: nil)
     @data              = data
     @dim               = dim
     @constrained_times = constrained_times
@@ -124,7 +124,7 @@ class Graph < Array
 
   # WRITE
   def write_into_txt(src, dst)
-    File.open("#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
+    File.open("history/#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
       @skyline_path.each do |sp|
         sp_id_array = path_to_edges_id(sp)
 
