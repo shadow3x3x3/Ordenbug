@@ -8,10 +8,10 @@ salu_data = File.read(FILE_PATH)
 
 puts "\nuse data: #{FILE_PATH}\n"
 
-times = 0.5
+times = 1.to_f
 
-(TEST_CONSTRAINED * 2 - 1).times do
-  times += 0.5
+until times >= 5
+  times += 0.1
   graph = Graph.new(data: salu_data, dim: 4, constrained_times: times)
   # graph.testing_unit_single 78, 458
   graph.testing_unit_single 159, 381

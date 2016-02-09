@@ -22,7 +22,7 @@ class Array
     return nil                             # not dominate
   end
   # skyline attributes aggregate for array
-  def aggregate array
+  def aggregate(array)
     aggregate_array = []
     raise "Need Array not #{array.class}"    unless array.class == Array
     raise "Two Arrays are not the same size" unless self.size == array.size

@@ -13,6 +13,6 @@ class Edge
   end
 
   def attr_array
-    array = [@dist, @lv, @risk, @flooding_potential]
+    [@dist, @lv, @risk, @flooding_potential]
   end
 end
