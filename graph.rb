@@ -31,6 +31,20 @@ class Array
     end
     aggregate_array
   end
+  # finding smaller attr
+  def aggregate_min(array)
+    aggregate_array = []
+    raise "Need Array not #{array.class}"    unless array.class == Array
+    raise "Two Arrays are not the same size" unless self.size == array.size
+    self.each_with_index do |attr, index|
+      if attr > array[index]
+        aggregate_array << array[index]
+      else
+        aggregate_array << attr
+      end
+    end
+    aggregate_array
+  end
 end
 
 class Graph < Array
@@ -124,7 +138,7 @@ class Graph < Array
 
   # WRITE
   def write_into_txt(src, dst)
-    File.open("history/#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
+    File.open("history/new/#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
       @skyline_path.each do |sp|
         sp_id_array = path_to_edges_id(sp)
 
@@ -147,7 +161,7 @@ class Graph < Array
     @skyline_path      = []
     @skyline_path_attr = []
     @part_skyline_attr = {}
-    (0..1284).each {|node| self.push node }
+    (0..3328).each {|node| self.push node }
     @skyline_path      << dijkstra(src, dst)[:path]
     # clac skyline path attr
     @skyline_path_attr << attr_in(@skyline_path.first)
@@ -247,12 +261,13 @@ class Graph < Array
     # puts "neighbors: #{vertex_stack}"
     # Find next vertex and attributes
     until vertex_stack.empty?
-      temp_edge = []
+      temp_edge     = []
+      next_attr     = attr_between(src, path.last)
       # Adding attributes with new node
       path << vertex_stack.pop # take a candicate vertex to path
       # puts "Add #{path.last}, #{path} is current path"
       unless attr_previous.nil?
-        path_attr_sum = attr_previous.aggregate(attr_between src, path.last)
+        path_attr_sum = attr_previous[0..4].aggregate(next_attr[0..4]) + attr_previous[5..7].aggregate_min(next_attr[5..7])
       else
         path_attr_sum = attr_between(src, path.last)
       end
@@ -366,7 +381,8 @@ class Graph < Array
       @dim.times { sum_array << 0 }
       edges_of_path = path_to_edges(path)
       attr_full = edges_of_path.inject(sum_array) do |attrs, edges|
-        attrs.aggregate(attr_between edges[0], edges[1])
+        next_attr = attr_between(edges[0], edges[1])
+        attrs[0..4].aggregate(next_attr[0..4]) + attrs[5..7].aggregate_min(next_attr[5..7])
       end
     else
       attr_full = attr_between(path.first, path.last)
