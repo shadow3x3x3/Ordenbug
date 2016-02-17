@@ -262,12 +262,12 @@ class Graph < Array
     # Find next vertex and attributes
     until vertex_stack.empty?
       temp_edge     = []
-      next_attr     = attr_between(src, path.last)
       # Adding attributes with new node
       path << vertex_stack.pop # take a candicate vertex to path
+      next_attr = attr_between(src, path.last)
       # puts "Add #{path.last}, #{path} is current path"
       unless attr_previous.nil?
-        path_attr_sum = attr_previous[0..4].aggregate(next_attr[0..4]) + attr_previous[5..7].aggregate_min(next_attr[5..7])
+        path_attr_sum = attr_previous[0..4].aggregate(next_attr[0..4]) + attr_previous[5..6].aggregate_min(next_attr[5..6])
       else
         path_attr_sum = attr_between(src, path.last)
       end
@@ -377,12 +377,14 @@ class Graph < Array
   # find attr in path
   def attr_in(path)
     sum_array = []
-    unless path.size <= 2
-      @dim.times { sum_array << 0 }
+    if path.size > 2
+      (@dim - 2).times { sum_array << 0 }
+      sum_array << 99999
+      sum_array << 99999
       edges_of_path = path_to_edges(path)
       attr_full = edges_of_path.inject(sum_array) do |attrs, edges|
         next_attr = attr_between(edges[0], edges[1])
-        attrs[0..4].aggregate(next_attr[0..4]) + attrs[5..7].aggregate_min(next_attr[5..7])
+        attrs[0..4].aggregate(next_attr[0..4]) + attrs[5..6].aggregate_min(next_attr[5..6])
       end
     else
       attr_full = attr_between(path.first, path.last)

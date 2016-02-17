@@ -1,6 +1,6 @@
 require_relative 'graph'
 
-FILE_PATH        = "salu_data/edges/salu_edge_160203_定量降雨350mm_無權重.txt"
+FILE_PATH        = "salu_data/edges/salu_edge_160203_定量降雨450mm_無權重.txt"
 
 salu_data = File.read(FILE_PATH)
 # salu_data_150 = File.read("test.txt")
