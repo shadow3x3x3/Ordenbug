@@ -72,7 +72,7 @@ describe Graph do
   end
 
   describe "#sort_by_dim" do
-    xit "result must be sorted" do
+    it "result must be sorted" do
       result = @graph.sort_by_dim(TEST_SKYLINE_ATTR_DATA)
       expect(result[0]).to eq([
         [1, 9, 3, 5],

@@ -467,7 +467,14 @@ class Graph < Array
 
   # sort skylines with dim
   def sort_by_dim(ori_array)
-
+    result_array = []
+    index = 0
+    dim   = ori_array[1].size - 0
+    dim.times do
+      result_array << ori_array.sort_by { |array| array[index] }
+      index += 1
+    end
+    result_array
   end
 
 end
