@@ -454,4 +454,20 @@ class Graph < Array
     [dest, get_path_recursively(previouses, src, previouses[dest])].flatten
   end
 
+  # combine skyline and these attributes
+  def combine_skyline(key_array, attrs_array)
+    raise "can't match skyline path and attribtes!" unless key_array.size != attrs_array
+    result_hash = {}
+    key_array.each_with_index do |array, index|
+      path_key = "path_#{array.join('_')}".to_sym
+      result_hash[path_key] = attrs_array[index]
+    end
+    result_hash
+  end
+
+  # sort skylines with dim
+  def sort_by_dim(ori_array)
+
+  end
+
 end
