@@ -28,13 +28,62 @@ TEST_SKYLINE_PATH =
   [6, 0, 1, 2]
 ]
 
-TEST_SKYLINE_ATTR_DATA =
+TEST_SKYLINE_ATTR_ARRAY =
 [
   [2, 6, 7, 8],
   [1, 9, 3, 5],
   [3, 4, 8, 7],
   [8, 3, 2, 1],
   [4, 2, 9, 3]
+]
+
+TEST_SKYLINE_ATTR_HASH =
+{
+  :a => [2, 6, 7, 8],
+  :b => [1, 9, 3, 5],
+  :c => [3, 4, 8, 7],
+  :d => [8, 3, 2, 1],
+  :e => [4, 2, 9, 3]
+}
+
+TEST_SKYLINE_ARRAY =
+[
+  [
+    [:b, [1, 9, 3, 5]],
+    [:a, [2, 6, 7, 8]],
+    [:c, [3, 4, 8, 7]],
+    [:e, [4, 2, 9, 3]],
+    [:d, [8, 3, 2, 1]]
+  ],
+  [
+    [:e, [4, 2, 9, 3]],
+    [:d, [8, 3, 2, 1]],
+    [:c, [3, 4, 8, 7]],
+    [:a, [2, 6, 7, 8]],
+    [:b, [1, 9, 3, 5]]
+  ],
+  [
+    [:d, [8, 3, 2, 1]],
+    [:b, [1, 9, 3, 5]],
+    [:a, [2, 6, 7, 8]],
+    [:c, [3, 4, 8, 7]],
+    [:e, [4, 2, 9, 3]]
+  ],
+  [
+    [:d, [8, 3, 2, 1]],
+    [:e, [4, 2, 9, 3]],
+    [:b, [1, 9, 3, 5]],
+    [:c, [3, 4, 8, 7]],
+    [:a, [2, 6, 7, 8]]
+  ]
+]
+
+TEST_TWO_LAYER_ARRAY =
+[
+  ["2", "1", "7", "8", "6", "3"],
+  ["1", "9", "2", "5", "3", "7"],
+  ["3", "1", "8", "2", "3", "7"],
+  ["8", "1", "2", "6", "7", "5"]
 ]
 
 describe Graph do
@@ -65,7 +114,7 @@ describe Graph do
 
   describe "#combine_skyline" do
     it "should return a hash with key in path and its attribtes" do
-      result_hash = @graph.combine_skyline(TEST_SKYLINE_PATH, TEST_SKYLINE_ATTR_DATA)
+      result_hash = @graph.combine_skyline(TEST_SKYLINE_PATH, TEST_SKYLINE_ATTR_ARRAY)
       expect(result_hash[:path_0_4_9]).to eq([3, 4, 8, 7])
       expect(result_hash[:path_6_0_1_2]).to eq([4, 2, 9, 3])
     end
@@ -73,35 +122,58 @@ describe Graph do
 
   describe "#sort_by_dim" do
     it "result must be sorted" do
-      result = @graph.sort_by_dim(TEST_SKYLINE_ATTR_DATA)
+      result = @graph.sort_by_dim(TEST_SKYLINE_ATTR_HASH)
       expect(result[0]).to eq([
-        [1, 9, 3, 5],
-        [2, 6, 7, 8],
-        [3, 4, 8, 7],
-        [4, 2, 9, 3],
-        [8, 3, 2, 1],
+        [:b, [1, 9, 3, 5]],
+        [:a, [2, 6, 7, 8]],
+        [:c, [3, 4, 8, 7]],
+        [:e, [4, 2, 9, 3]],
+        [:d, [8, 3, 2, 1]],
         ])
+        # b a c d e
       expect(result[1]).to eq([
-        [4, 2, 9, 3],
-        [8, 3, 2, 1],
-        [3, 4, 8, 7],
-        [2, 6, 7, 8],
-        [1, 9, 3, 5],
+        [:e, [4, 2, 9, 3]],
+        [:d, [8, 3, 2, 1]],
+        [:c, [3, 4, 8, 7]],
+        [:a, [2, 6, 7, 8]],
+        [:b, [1, 9, 3, 5]],
         ])
+        # e d c a b
       expect(result[2]).to eq([
-        [8, 3, 2, 1],
-        [1, 9, 3, 5],
-        [2, 6, 7, 8],
-        [3, 4, 8, 7],
-        [4, 2, 9, 3],
+        [:d, [8, 3, 2, 1]],
+        [:b, [1, 9, 3, 5]],
+        [:a, [2, 6, 7, 8]],
+        [:c, [3, 4, 8, 7]],
+        [:e, [4, 2, 9, 3]],
         ])
+        # d b a c e
       expect(result[3]).to eq([
-        [8, 3, 2, 1],
-        [4, 2, 9, 3],
-        [1, 9, 3, 5],
-        [3, 4, 8, 7],
-        [2, 6, 7, 8],
+        [:d, [8, 3, 2, 1]],
+        [:e, [4, 2, 9, 3]],
+        [:b, [1, 9, 3, 5]],
+        [:c, [3, 4, 8, 7]],
+        [:a, [2, 6, 7, 8]],
         ])
+        # d e b c  a
+    end
+  end
+
+  describe "#get_skyline_path_set" do
+    it "should get the paht" do
+      result = @graph.get_skyline_path_set(TEST_SKYLINE_ARRAY)
+      expect(result).to match_array([
+          ["b", "a", "c", "e", "d"],
+          ["e", "d", "c", "a", "b"],
+          ["d", "b", "a", "c", "e"],
+          ["d", "e", "b", "c", "a"]
+        ])
+    end
+  end
+
+  describe "#filter_array_top_k" do
+    it "result are 1, 2 when top_k = 2" do
+      result = @graph.filter_array_top_k(TEST_TWO_LAYER_ARRAY, 2)
+      expect(result).to match_array(["1", "2"])
     end
   end
 

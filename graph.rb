@@ -241,6 +241,7 @@ class Graph < Array
       total = [t1+t2]
     end
     total[0].to_a.last
+    puts filter_skyline
   end # sky path end
 
   # Dominance Test Function
@@ -466,15 +467,53 @@ class Graph < Array
   end
 
   # sort skylines with dim
-  def sort_by_dim(ori_array)
+  def sort_by_dim(ori_hash)
     result_array = []
     index = 0
-    dim   = ori_array[1].size - 0
+    dim   = @dim
     dim.times do
-      result_array << ori_array.sort_by { |array| array[index] }
+      result_array << ori_hash.sort_by { |key, value| value[index] }
       index += 1
     end
     result_array
   end
+
+  def filter_skyline
+    all_skyline  = combine_skyline(@skyline_path, @skyline_path_attr)
+    sort_result  = sort_by_dim(all_skyline)
+
+    skyline_path_set = get_skyline_path_set(sort_result)
+    reslut = filter_array_top_k(skyline_path_set, 5)
+    reslut
+  end
+
+  def filter_array_top_k(three_layer_array, top_k)
+    result_array = []
+    search_range = 0
+    find_k       = 0
+    until find_k == top_k
+      search_range += 1
+      result_array = three_layer_array.inject {|top_k, next_array| top_k & next_array[0..search_range] }
+      find_k = result_array.size
+    end
+    result_array
+  end
+
+  # get skyline path set due to not really skyline array
+  def get_skyline_path_set(skyline_array)
+    skyline_path_set = []
+    skyline_array.each_with_index do |skyline_set, index|
+      temp_set = []
+      if index < 5
+        skyline_set.each do |skyline|
+          temp_set << skyline[0].to_s
+        end
+        p temp_set
+        skyline_path_set << temp_set
+      end
+    end
+    skyline_path_set
+  end
+
 
 end

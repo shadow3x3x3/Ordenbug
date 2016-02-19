@@ -1,6 +1,6 @@
 require_relative 'graph'
 
-FILE_PATH        = "salu_data/edges/salu_edge_160203_定量降雨450mm_無權重.txt"
+FILE_PATH        = "salu_data/edges/salu_edge_160203_定量降雨350mm_無權重.txt"
 
 salu_data = File.read(FILE_PATH)
 # salu_data_150 = File.read("test.txt")
@@ -17,7 +17,7 @@ times = 1.to_f
 # end
 
 graph = Graph.new(data: salu_data, dim: 7, constrained_times: 1.3)
-graph.testing_unit_single(2590, 977)
+graph.testing_unit_single(1032, 3127)
 
 # graph = Graph.new(data: salu_data, dim: 4)
 
