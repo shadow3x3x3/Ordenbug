@@ -508,7 +508,6 @@ class Graph < Array
         skyline_set.each do |skyline|
           temp_set << skyline[0].to_s
         end
-        p temp_set
         skyline_path_set << temp_set
       end
     end
