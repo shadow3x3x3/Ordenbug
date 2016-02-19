@@ -51,13 +51,14 @@ class Graph < Array
   attr_reader :edges
 
   def initialize(data: nil, dim: nil, constrained_times: nil)
-    @data              = data
-    @dim               = dim
-    @constrained_times = constrained_times
-    @edges             = []
-    @skyline_path      = []
-    @skyline_path_attr = []
-    @part_skyline_attr = {}
+    @data                = data
+    @dim                 = dim
+    @constrained_times   = constrained_times
+    @edges               = []
+    @skyline_path        = []
+    @skyline_path_attr   = []
+    @part_skyline_attr   = {}
+    @filter_skyline_path = []
     data_to_object @data, dim
   end
 
@@ -127,19 +128,38 @@ class Graph < Array
     sky_path src, dst
     puts "We found #{@skyline_path.size} skylines"
     puts ""
-    # @skyline_path.each do |sp|
-    #   puts "skyline : #{sp}"
-    #   puts "attr: #{attr_in sp}"
-    #   puts ""
-    #   # puts "edges id: #{path_to_edges_id sp} "
-    # end
+    @filter_skyline_path = filter_skyline
+    @filter_skyline_path.map! {|path| path.split("_")}
+    @filter_skyline_path.map! do |skyline_path|
+      skyline_path.shift # shift the "path"
+      skyline_path.map(&:to_i)
+    end
     write_into_txt(src, dst)
   end
 
   # WRITE
   def write_into_txt(src, dst)
+    # all skylines
     File.open("history/new/#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
       @skyline_path.each do |sp|
+        sp_id_array = path_to_edges_id(sp)
+
+        sp_id_array.each_with_index do |sp_id, index|
+          unless index == sp_id_array.size - 1
+            file.write("\"id\" = #{sp_id} OR ")
+          else
+            file.write("\"id\" = #{sp_id}\n")
+          end
+
+        end
+        # "id" = 34 OR "id" = 33....
+
+      end
+    end
+
+    # filter skylines
+    File.open("history/new/top_5_#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
+      @filter_skyline_path.each do |sp|
         sp_id_array = path_to_edges_id(sp)
 
         sp_id_array.each_with_index do |sp_id, index|
@@ -241,7 +261,7 @@ class Graph < Array
       total = [t1+t2]
     end
     total[0].to_a.last
-    puts filter_skyline
+
   end # sky path end
 
   # Dominance Test Function
@@ -459,10 +479,10 @@ class Graph < Array
   def combine_skyline(key_array, attrs_array)
     raise "can't match skyline path and attribtes!" unless key_array.size != attrs_array
     result_hash = {}
-    key_array.each_with_index do |array, index|
-      path_key = "path_#{array.join('_')}".to_sym
-      result_hash[path_key] = attrs_array[index]
-    end
+    result_hash = Hash[ key_array.map.with_index do |array, index|
+        ["path_#{array.join('_')}".to_sym, attrs_array[index]]
+      end
+    ]
     result_hash
   end
 
