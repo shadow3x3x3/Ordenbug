@@ -50,10 +50,11 @@ end
 class Graph < Array
   attr_reader :edges
 
-  def initialize(data: nil, dim: nil, constrained_times: nil)
+  def initialize(data: nil, dim: nil, constrained_times: nil, dim_times_array: nil)
     @data                = data
     @dim                 = dim
     @constrained_times   = constrained_times
+    @dim_times_array     = dim_times_array
     @edges               = []
     @skyline_path        = []
     @skyline_path_attr   = []
@@ -188,7 +189,7 @@ class Graph < Array
     # Insert partial skyline from skyline
     @skyline_path.first.each_with_index do |vertex, index|
       unless index < 1
-        no = "#{@skyline_path.first.first.to_s}_#{vertex}"
+        no = "#{@skyline_path.first.first}_#{vertex}"
         path_attr_sum = attr_in @skyline_path.first[0..index]
         @part_skyline_attr["p#{no}".to_sym] = path_attr_sum
       end
@@ -221,7 +222,7 @@ class Graph < Array
       neighbors.each do |vertex|
         alt = distances[nearest_vertex] + vertices.distance_between(nearest_vertex, vertex)
         if distances[vertex].nil? or alt < distances[vertex]
-          distances[vertex] = alt
+          distances[vertex]  = alt
           previouses[vertex] = nearest_vertex
         end
       end
@@ -232,7 +233,7 @@ class Graph < Array
       return nil
     else
       paths = {}
-      distances.each { |k, v| paths[k] = get_path(previouses, src, k) }
+      distances.each { |k, _v| paths[k] = get_path(previouses, src, k) }
       p "path: #{path}, distance: #{distances[dst]}"
       return { paths: paths, distances: distances }
     end
@@ -252,7 +253,7 @@ class Graph < Array
   def sky_path(src, dst)
     puts ""
     puts "     ******* SkyPath - Source: #{src}, destination: #{dst}, Constrained Times: #{@constrained_times}  ******"
-    t1 = t2 = t3 = total = 0
+    t1 = t2 = total = 0
 
     Benchmark.benchmark(CAPTION, 22, FORMAT, "total:") do |step|
       t1 = step.report("Find First Skyline") { shortest_path(src, dst)}
@@ -434,16 +435,12 @@ class Graph < Array
   # clear data
   def data_to_object(data, dim)
     norm_data = data.split(" ").map.each_with_index do |value, index|
-      if (0..2) === index % (dim + 3)
-        value.to_i
-      else
-        value.to_f
-      end
+      (0..2) === index % (dim + 3) ? value.to_i : value.to_f
     end
     i = 0
-    norm_data.each_with_index do |value, index|
+    norm_data.each_with_index do |_value, index|
       if index % (dim + 3) == 0
-        @edges.push Edge.new(*norm_data[i..i+2+dim])
+        @edges.push Edge.new(*norm_data[i..i+2+dim], dim_times_array: @dim_times_array)
         i += (dim + 3)
       end
     end
@@ -511,7 +508,7 @@ class Graph < Array
     result_array = []
     search_range = 0
     find_k       = 0
-    until find_k == top_k
+    until (find_k >= top_k) # || (search_range == @skyline_path.size)
       search_range += 1
       result_array = three_layer_array.inject {|top_k, next_array| top_k & next_array[0..search_range] }
       find_k = result_array.size

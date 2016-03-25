@@ -7,7 +7,6 @@ salu_data = File.read(FILE_PATH)
 
 puts "\nuse data: #{FILE_PATH}\n"
 
-times = 1.to_f
 
 # until times >= 5
 #   times += 0.1
@@ -16,9 +15,9 @@ times = 1.to_f
 #   graph.testing_unit_single(159, 381)
 # end
 
-graph = Graph.new(data: salu_data, dim: 7, constrained_times: 1.3)
-graph.testing_unit_single(1032, 3127)
-
+graph = Graph.new(data: salu_data, dim: 7, constrained_times: 2)
+# graph.testing_unit_single(1032, 3127)
+graph.testing_unit_single(2590, 977)
 # graph = Graph.new(data: salu_data, dim: 4)
 
 
