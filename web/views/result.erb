@@ -1,0 +1,7 @@
+<h1>計算結果<h1>
+<% @result.each do |r| %>
+  <%= r %><br>
+<% end %>
+
+
+<a href="/download/<%= @filename %>" class="btn btn-primary">下載</a>
