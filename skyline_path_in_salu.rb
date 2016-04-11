@@ -17,7 +17,7 @@ puts "\nuse data: #{FILE_PATH}\n"
 
 graph = Graph.new(data: salu_data, dim: 7, constrained_times: 1.3)
 # graph.testing_unit_single(1032, 3127)
-graph.testing_unit_single(230, 468)
+graph.testing_unit_single(160, 306)
 # graph = Graph.new(data: salu_data, dim: 4)
 
 

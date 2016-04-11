@@ -128,7 +128,6 @@ class Graph < Array
   def testing_unit_single(src, dst)
     sky_path src, dst
     puts "We found #{@skyline_path.size} skylines"
-    # puts ""
     @filter_skyline_path = filter_skyline
     @filter_skyline_path.map! {|path| path.split("_")}
     @filter_skyline_path.map! do |skyline_path|
@@ -160,22 +159,22 @@ class Graph < Array
     end
 
     # filter skylines
-    # File.open("history/new/top_5_#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
-    #   @filter_skyline_path.each do |sp|
-    #     sp_id_array = path_to_edges_id(sp)
-    #
-    #     sp_id_array.each_with_index do |sp_id, index|
-    #       unless index == sp_id_array.size - 1
-    #         file.write("\"id\" = #{sp_id} OR ")
-    #       else
-    #         file.write("\"id\" = #{sp_id}\n")
-    #       end
-    #
-    #     end
-    #     # "id" = 34 OR "id" = 33....
-    #
-    #   end
-    # end
+    File.open("../history/new/top_5_#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
+      @filter_skyline_path.each do |sp|
+        sp_id_array = path_to_edges_id(sp)
+
+        sp_id_array.each_with_index do |sp_id, index|
+          unless index == sp_id_array.size - 1
+            file.write("\"id\" = #{sp_id} OR ")
+          else
+            file.write("\"id\" = #{sp_id}\n")
+          end
+
+        end
+        # "id" = 34 OR "id" = 33....
+
+      end
+    end
   end
 
   # dijkstra

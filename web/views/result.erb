@@ -1,7 +1,13 @@
-<h1>計算結果<h1>
-<% @result.each do |r| %>
-  <%= r %><br>
-<% end %>
+<div>
+  <h1>計算結果<h1>
+  <% @result.each do |r| %>
+    <%= r %><br>
+  <% end %>
+</div>
 
 
-<a href="/download/<%= @filename %>" class="btn btn-primary">下載</a>
+<div class="col-md-4">
+  <a href="/download/<%= @filename %>" class="btn btn-primary">下載所有skyline path</a>
+  <a href="/download/<%= @filename_5 %>" class="btn btn-primary">下載Top 5 skyline path</a>
+  <a href="/" class="btn btn-default">返回</a>
+</div>
