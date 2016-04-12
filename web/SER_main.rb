@@ -32,6 +32,7 @@ post '/SkylinePathResult' do
   dim_times_array = [params[:dim_1].to_i, params[:dim_2].to_i, params[:dim_3].to_i, params[:dim_4].to_i, params[:dim_5].to_i, params[:dim_6].to_i, params[:dim_7].to_i]
   @filename = "#{params[:source]}to#{params[:destination]}_in_#{params[:constrained].to_f}_times_skyline_path_result.txt"
   @filename_5 = "top_5_#{params[:source]}to#{params[:destination]}_in_#{params[:constrained].to_f}_times_skyline_path_result.txt"
+  @filename_sum = "sum_best_#{params[:source]}to#{params[:destination]}_in_#{params[:constrained].to_f}_times_skyline_path_result.txt"
   @result = skyline_path_in_salu(path, dim_times_array, params[:source].to_i, params[:destination].to_i, params[:constrained].to_f)
   erb :result
 end

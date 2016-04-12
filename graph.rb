@@ -60,6 +60,7 @@ class Graph < Array
     @skyline_path_attr   = []
     @part_skyline_attr   = {}
     @filter_skyline_path = []
+    @sum_best_skyline_path = nil
     data_to_object @data, dim
   end
 
@@ -128,18 +129,25 @@ class Graph < Array
   def testing_unit_single(src, dst)
     sky_path src, dst
     puts "We found #{@skyline_path.size} skylines"
-    @filter_skyline_path = filter_skyline
-    @filter_skyline_path.map! {|path| path.split("_")}
-    @filter_skyline_path.map! do |skyline_path|
-      skyline_path.shift # shift the "path"
-      skyline_path.map(&:to_i)
+
+    if @skyline_path.size > 5
+      @filter_skyline_path = filter_skyline
+      @filter_skyline_path.map! {|path| path.split("_")}
+      @filter_skyline_path.map! do |skyline_path|
+        skyline_path.shift # shift the "path"
+        skyline_path.map(&:to_i)
+      end
+      @sum_best_skyline_path = sum_best_path(@filter_skyline_path)
+    else
+      @filter_skyline_path = @skyline_path
+      @sum_best_skyline_path = sum_best_path(@skyline_path)
     end
     write_into_txt(src, dst)
     @skyline_path
   end
 
   # WRITE
-  def write_into_txt(src, dst)
+  def write_into_txt(src, dst, type: nil)
     # all skylines
     File.open("../history/new/#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
       @skyline_path.each do |sp|
@@ -174,6 +182,21 @@ class Graph < Array
         # "id" = 34 OR "id" = 33....
 
       end
+    end
+
+    # sum best
+    File.open("../history/new/sum_best_#{src}to#{dst}_in_#{@constrained_times}_times_skyline_path_result.txt", "w") do |file|
+      sp_id_array = path_to_edges_id(@sum_best_skyline_path)
+
+      sp_id_array.each_with_index do |sp_id, index|
+        unless index == sp_id_array.size - 1
+          file.write("\"id\" = #{sp_id} OR ")
+        else
+          file.write("\"id\" = #{sp_id}\n")
+        end
+
+      end
+      # "id" = 34 OR "id" = 33....
     end
   end
 
@@ -502,6 +525,15 @@ class Graph < Array
     skyline_path_set = get_skyline_path_set(sort_result)
     reslut = filter_array_top_k(skyline_path_set, 5)
     reslut
+  end
+
+  def sum_best_path(fsps)
+    fsps_sum = []
+    fsps.each do |fsp|
+      fsps_sum << fsp.inject(&:+)
+    end
+
+    fsps[fsps_sum.index(fsps_sum.min)]
   end
 
   def filter_array_top_k(three_layer_array, top_k)

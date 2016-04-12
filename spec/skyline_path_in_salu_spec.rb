@@ -188,6 +188,13 @@ describe Graph do
         expect(result).to match_array(["1", "2"])
       end
     end
+
+    describe "#sum_best_path" do
+      it "sum best is [8, 3, 2, 1]" do
+        expect(@graph.sum_best_path(TEST_SKYLINE_ATTR_ARRAY)).to match_array([8, 3, 2, 1])
+      end
+    end
+
   end
 
 
